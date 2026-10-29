@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simon Simulations · AGV Water Control</title>
+<link rel="icon" type="image/svg+xml" href="img/agv-mark.svg">
+<style>
+  :root { --bg: #f2f0eb; --card: #ffffff; --text: #1b2430; --muted: #5f6b78; --border: #e1ddd4; --accent: #0b6bcb; --water: #4aa3df; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 18px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .deck { height: 100%; display: flex; flex-direction: column; }
+  .slide { display: none; flex: 1; padding: 6vh 7vw 3vh; overflow-y: auto; }
+  .slide.on { display: flex; flex-direction: column; justify-content: center; }
+  .kicker { color: var(--accent); font-size: 13px; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; margin-bottom: 12px; }
+  h1 { font-size: clamp(34px, 5vw, 60px); line-height: 1.08; margin: 0 0 20px; letter-spacing: -.01em; }
+  h2 { font-size: clamp(26px, 3.4vw, 42px); line-height: 1.15; margin: 0 0 26px; letter-spacing: -.01em; }
+  p.lead { font-size: clamp(18px, 2vw, 23px); color: var(--muted); max-width: 860px; margin: 0 0 18px; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; max-width: 1150px; margin-top: 10px; }
+  .step, .pillar { background: var(--card); border-radius: 16px; padding: 20px 22px; box-shadow: 0 4px 20px rgba(27, 36, 48, .06); }
+  .step b, .pillar b { display: block; font-size: 19px; margin-bottom: 6px; }
+  .step span, .pillar span { color: var(--muted); font-size: 16px; }
+  .step span b { display: inline; font-size: inherit; margin: 0; color: var(--accent); }
+  .step i { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #fff; font-style: normal; font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+  .pillars { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; max-width: 1150px; }
+  .pillar small { display: block; color: var(--accent); font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+  .highlight { display: inline-flex; align-items: baseline; gap: 10px; background: var(--card); border-radius: 14px; padding: 14px 20px; margin: 6px 0 22px;
+               box-shadow: 0 4px 20px rgba(27, 36, 48, .06); max-width: 860px; }
+  .highlight b { font-size: 34px; color: var(--accent); }
+  .cta { display: inline-block; background: var(--accent); color: #fff; text-decoration: none; padding: 16px 26px; border-radius: 12px; font-weight: 700; font-size: 21px;
+         box-shadow: 0 8px 24px rgba(11, 107, 203, .3); }
+  .disclaimer { margin: 26px auto 0; max-width: 1150px; color: #b42318; background: #fef3f2; border: 1px solid #fda29b; border-radius: 12px; padding: 12px 18px; font-size: 15px; font-weight: 600; text-align: center; }
+  .cta:hover { filter: brightness(1.08); }
+  .agv-logo { height: 64px; width: auto; align-self: flex-start; margin-bottom: 28px; }
+  .wave { height: 6px; width: 120px; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--water)); margin-bottom: 26px; }
+  .nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 7vw; font-size: 14px; color: var(--muted); }
+  .nav button { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px; cursor: pointer; }
+  .nav button:disabled { opacity: .4; cursor: default; }
+  .dots { display: flex; gap: 8px; }
+  .dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--border); }
+  .dots i.on { background: var(--accent); }
+  .muted { color: var(--muted); }
+  .versus { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: stretch; max-width: 1150px; margin-bottom: 20px; }
+  .vs-card { background: var(--card); border-radius: 16px; padding: 20px 22px; box-shadow: 0 4px 20px rgba(27, 36, 48, .06); }
+  .vs-card small { display: block; font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+  .vs-card.old small { color: #9a6a12; } .vs-card.new small { color: var(--accent); }
+  .vs-card.new { box-shadow: 0 0 0 2px var(--accent), 0 8px 24px rgba(11, 107, 203, .15); }
+  .vs-card b { display: block; font-size: 20px; margin-bottom: 6px; }
+  .vs-card span { color: var(--muted); font-size: 16px; } .vs-card span b { display: inline; font-size: inherit; color: var(--text); }
+  .vs-arrow { align-self: center; font-size: 34px; color: var(--accent); font-weight: 700; }
+  .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-width: 1150px; margin-bottom: 12px; }
+  .results div { background: var(--card); border-radius: 16px; padding: 16px 20px; box-shadow: 0 4px 20px rgba(27, 36, 48, .06); }
+  .results b { display: block; font-size: 30px; color: var(--accent); }
+  .results span { color: var(--muted); font-size: 15px; }
+  .layers { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; max-width: 1150px; margin-top: 8px; }
+  .layer { background: var(--card); border-radius: 16px; padding: 20px 22px; box-shadow: 0 4px 20px rgba(27, 36, 48, .06); }
+  .layer.new { box-shadow: 0 0 0 2px var(--accent), 0 8px 24px rgba(11, 107, 203, .15); }
+  .layer small, .rule small { display: block; color: var(--accent); font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+  .layer b { display: block; font-size: 20px; margin-bottom: 6px; } .layer span { color: var(--muted); font-size: 16px; }
+  .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; max-width: 1150px; margin-bottom: 18px; }
+  .rule { background: var(--card); border-radius: 16px; padding: 16px 20px; box-shadow: 0 4px 20px rgba(27, 36, 48, .06); border-top: 4px solid var(--accent); }
+  .rule.dry { border-top-color: #c98a1a; } .rule.dry small { color: #9a6a12; }
+  .rule.safe { border-top-color: var(--muted); } .rule.safe small { color: var(--muted); }
+  .rule b { display: block; font-size: 19px; margin-bottom: 4px; } .rule span { color: var(--muted); font-size: 15px; }
+  .team { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 18px; }
+  .nav-mid { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .nav-mid span { font-size: 12px; font-weight: 600; letter-spacing: .04em; }
+  .q { font-style: italic; color: var(--text); }
+  .explainer { width: 100%; max-width: 1150px; max-height: 74vh; aspect-ratio: 16 / 9; border-radius: 16px; background: #000; box-shadow: 0 12px 40px rgba(27, 36, 48, .18); }
+  @media (max-width: 800px) { .layers { grid-template-columns: 1fr; } .versus { grid-template-columns: 1fr; } .vs-arrow { transform: rotate(90deg); justify-self: center; } }
+  /* everything centred on the slide; card text stays left-aligned for readability */
+  .slide.on { align-items: center; text-align: center; }
+  .slide > * { margin-left: auto; margin-right: auto; }
+  .agv-logo { align-self: center; }
+  p.lead { margin-left: auto; margin-right: auto; }
+  .steps, .pillars, .versus, .results, .layers, .rules { width: 100%; }
+  .step, .pillar, .layer, .rule, .vs-card, .results div { text-align: left; }
+  .layer.new[style] { margin-left: auto; margin-right: auto; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<section class="slide on">
+  <img class="agv-logo" src="img/agv-logo.svg" alt="Waterschap Amstel, Gooi en Vecht">
+  <div class="team">By team Simon Simulations</div>
+  <div class="kicker">AI for Water Hackathon · AGV challenge · prototype, not an official AGV product</div>
+  <h1>Better decisions on when to turn<br>the pumps on and off.</h1>
+  <p class="lead">Climate change makes the weather more extreme. AGV no longer only wants to get as much water away as possible: in warm, dry weather it also wants to <b>retain</b> water. We built two layers that work together, for all 43 polder pumping stations.</p>
+  <div class="layers">
+    <div class="layer"><small>Layer 1 · the model</small><b>Pumps the way AGV's operators do</b>
+      <span>A machine-learning model, trained on 26 years of AGV pump data and the weather, that does what the operators already do, by machine.</span></div>
+    <div class="vs-arrow" aria-hidden="true">+</div>
+    <div class="layer new"><small>Layer 2 · the rules</small><b>Decides when to deviate</b>
+      <span>Rules on top read the 14-day forecast: pump extra before heavy rain, pump less to retain water before a dry spell.</span></div>
+  </div>
+  <p class="disclaimer">Disclaimer: this is a prototype built by a team of participants during the AI for Water Hackathon (Amsterdam, October 2026). It is not an official AGV product, and it is not made, endorsed or used by Waterschap Amstel, Gooi en Vecht. Results are estimates from a prototype.</p>
+</section>
+
+<section class="slide" data-video>
+  <div class="kicker">The idea in one minute</div>
+  <video id="explainer" class="explainer" src="video/explainer.mp4" poster="video/explainer-poster.jpg" controls playsinline preload="metadata"></video>
+</section>
+
+<section class="slide">
+  <div class="kicker">Layer 1 · the model</div>
+  <h2>A machine that pumps the way AGV's operators do.</h2>
+  <div class="steps">
+    <div class="step"><i>1</i><b>Learned from AGV's own operation</b><span>Trained on 26 years (1996–2021) of hourly pump data from 43 stations, together with the real weather.</span></div>
+    <div class="step"><i>2</i><b>Tested on years it never saw</b><span>On 2022–2025 it matches the daily pumping of all stations together (R² <b id="r2">0.84</b>), and per station week by week (R² <b>0.93</b>).</span></div>
+    <div class="step"><i>3</i><b>One model, every station</b><span>It knows each polder's size, soil and land use, so it can say for any day: <em class="q">this is what AGV would usually pump</em>.</span></div>
+  </div>
+  <p class="muted" style="margin-top:22px">That "usual" pumping is the baseline. The rules in layer 2 decide when, and how much, to deviate from it.</p>
+</section>
+
+<section class="slide">
+  <div class="kicker">Layer 2 · the rules on top</div>
+  <h2>Pump ahead of the rain, retain water ahead of the drought.</h2>
+  <div class="rules">
+    <div class="rule"><small>Heavy rain coming</small><b>Pre-pump</b><span>When heavy rain is forecast, we pump extra beforehand so the polder has room to take it.</span></div>
+    <div class="rule dry"><small>Dry spell coming</small><b>Retain</b><span>When a dry spell is forecast, we pump less and keep water in the polder for later.</span></div>
+    <div class="rule dry"><small>After a dry month</small><b>Keep the buffer</b><span>After a dry period, a bit of rain doesn't make us pump the saved water away.</span></div>
+    <div class="rule safe"><small>Always</small><b>Stay within safe limits</b><span>Water levels and pumps always stay within the limits they're known to handle.</span></div>
+  </div>
+  <p style="margin:0 0 10px; font-weight:600">According to rough estimates, if AGV had used our system in these periods:</p>
+  <div class="results">
+    <div><b>−22%</b><span>lower peak pumping in the September 2013 storm than AGV actually pumped</span></div>
+    <div><b>1.2 million m³</b><span>more water held in the polders at the driest point of spring 2023 than with usual pumping</span></div>
+    <div><b>0.9 million m³</b><span>more water held at the driest point of the 2018 drought than with usual pumping</span></div>
+  </div>
+  <p class="muted" style="font-size:14px">Replays of the real weather with a noisy forecast. The data has no water levels, so levels are calculated: water not pumped stays in the polder's open water (ditches and lakes, from the TOP10NL map).</p>
+</section>
+
+<section class="slide">
+  <div class="kicker">Limitations · next steps</div>
+  <h2>The rules are our assumptions. AGV's experience should set them.</h2>
+  <div class="rules">
+    <div class="rule safe"><small>Limitation</small><b>The rules are not validated yet</b><span>The thresholds on the previous slide (15 mm, −20 mm, 70% of the band) are our own choices. Water-board professionals need to check them, and they need testing with more data and real experiments.</span></div>
+    <div class="rule safe"><small>Limitation</small><b>No water levels in the data</b><span>The data has pump volumes but no level sensors, so the polder levels are simulated from pumped volume and open-water area. Letting water in during droughts is not in the data either.</span></div>
+    <div class="rule safe"><small>Where the model is weaker</small><b>Single days at some stations</b><span>Per station, daily accuracy ranges from R² 0.28 to 0.82; week by week it is much better (0.93). And a forecast beyond about a week is uncertain, so the rules act carefully on it.</span></div>
+  </div>
+  <div class="layer new" style="max-width:1150px">
+    <small>Next step</small><b>Easy to improve with AGV's knowledge</b>
+    <span>The rules are a handful of readable numbers in one place. New data or experiments plug straight in: tune a rule with the operators, replay past years to test it, then trial it in manual mode at a few stations.
+    The goal is smooth operation that anticipates the weather, without pumping water out only to let it back in. Finding the best rules takes experience, and that is not in this dataset or this hackathon.</span>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="kicker">How it meets the four criteria</div>
+  <h2>Built for AGV's real problem, ready to use.</h2>
+  <div class="pillars">
+    <div class="pillar"><small>Problem fit</small><b>When to pump, and when to retain</b><span>AGV's question: optimise when the pumps go on and off, now that climate change means not only draining water, but sometimes keeping it in. The rules answer exactly that, for all 43 stations.</span></div>
+    <div class="pillar"><small>Technical quality</small><b>Our own model, honestly tested</b><span>Trained on AGV's own data, checked on years it never saw. It matches how operators pump; the rules on top are simple and explainable.</span></div>
+    <div class="pillar"><small>Impact</small><b>Fewer floods, less drought</b><span>Pumping ahead of rain lowers the peak load on the shared main water; in dry spells the polders keep their water.</span></div>
+    <div class="pillar"><small>Feasibility</small><b>Works with what AGV already has</b><span>Existing pump records and free weather forecasts, in a browser. Operators stay in charge: auto or manual mode.</span></div>
+  </div>
+  <p style="margin-top:26px"><a class="cta" href="https://aiso-water-hackathon.vercel.app/dashboard.html?tour=1" target="_blank" rel="noopener">Open the live demo →</a>
+    <span class="muted" style="font-size:14px; margin-left:12px">A short guided tour, then the operator screen. No login needed.</span></p>
+</section>
+
+<nav class="nav">
+  <button id="prev">← Back</button>
+  <div class="nav-mid"><div class="dots" id="dots"></div><span>Simon Simulations</span></div>
+  <button id="next">Next →</button>
+</nav>
+</div>
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+let cur = 0;
+const dots = document.getElementById("dots");
+dots.innerHTML = slides.map(() => "<i></i>").join("");
+function show(k) {
+  cur = Math.max(0, Math.min(slides.length - 1, k));
+  slides.forEach((s, i) => s.classList.toggle("on", i === cur));
+  [...dots.children].forEach((d, i) => d.classList.toggle("on", i === cur));
+  document.getElementById("prev").disabled = cur === 0;
+  document.getElementById("next").disabled = cur === slides.length - 1;
+  // the explainer plays when its slide opens and pauses when you leave it
+  const vid = document.getElementById("explainer");
+  if (slides[cur].hasAttribute("data-video")) { vid.currentTime = 0; vid.play().catch(() => {}); } else vid.pause();
+}
+document.getElementById("prev").onclick = () => show(cur - 1);
+document.getElementById("next").onclick = () => show(cur + 1);
+addEventListener("keydown", (e) => { if (e.key === " " && slides[cur].hasAttribute("data-video")) { e.preventDefault(); const v = document.getElementById("explainer"); v.paused ? v.play() : v.pause(); return; }
+  if (e.key === "ArrowRight" || e.key === " ") show(cur + 1); if (e.key === "ArrowLeft") show(cur - 1); });
+show(0);
+</script>
+</body>
+</html>
