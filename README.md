@@ -2,7 +2,7 @@
 
 🥇 **1st place, AI for Water Hackathon, Amsterdam, 28 October 2026** (AGV challenge)
 
-**▶ [Open the live demo](https://aiso-water-hackathon.vercel.app)** · [Pitch deck (PDF)](AGV-Water-Control-pitch-deck.pdf) · [60-second explainer video](video/explainer.mp4)
+**▶ [Open the live demo](https://aiso-water-hackathon.vercel.app)** · [Pitch deck with video](https://finnsim123.github.io/AGV-Water-Control/) · [Pitch deck (PDF)](AGV-Water-Control-pitch-deck.pdf) · [60-second explainer video](video/explainer.mp4)
 
 ## The challenge
 
@@ -26,7 +26,7 @@ the dry spring of 2023 about 1.2 million m³ more water would have stayed in the
 | File | What it is |
 |---|---|
 | [`AGV-Water-Control-pitch-deck.pdf`](AGV-Water-Control-pitch-deck.pdf) | The pitch deck as a PDF |
-| [`index.html`](index.html) | The same deck as a web page, with the video playing on slide 2 |
+| [`index.html`](index.html) | The same deck as a web page, with the video playing on slide 2 ([open it](https://finnsim123.github.io/AGV-Water-Control/)) |
 | [`video/explainer.mp4`](video/explainer.mp4) | The idea in one minute |
 
 The source code and model stay private. The demo runs at
